@@ -3,3 +3,14 @@ extends layout
 block content
   h1= title
   p Welcome to #{title}
+  if user
+    p Hello, #{user.username}
+    a(href="/logout") logout
+    br
+    a(href="/users") users
+  else
+    a(href="/login") login
+    br
+    a(href="/users") users
+  script(src="/javascripts/bundle.js")
+    

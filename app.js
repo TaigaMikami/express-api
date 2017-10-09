@@ -6,6 +6,34 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var helmet = require('helmet');
 
+var session = require('express-session');
+var passport = require('passport');
+var GitHubStrategy = require('passport-github2').Strategy;
+
+var GITHUB_CLIENT_ID = '5dc31360d2a262c67d7c';
+var GITHUB_CLIENT_SECRET = 'ef3ac9c87c7a27b2c4fdc2d4f343bafa22077b19';
+
+passport.serializeUser(function (user, done) {
+  done(null, user);
+});
+
+passport.deserializeUser(function (obj, done) {
+  done(null, obj);
+});
+
+passport.use(new GitHubStrategy({
+  clientID: GITHUB_CLIENT_ID,
+  clientSecret: GITHUB_CLIENT_SECRET,
+  callbackURL: 'http://localhost:8000/auth/github/callback'
+},
+  function (accessToken, refreshToken, profile, done) {
+    process.nextTick(function () {
+      return done(null, profile);
+    });
+  }
+));
+
+
 var routes = require('./routes/index');
 var users = require('./routes/users');
 var photos = require('./routes/photos');
@@ -24,10 +52,40 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.use(session({ secret: '417cce55dcfcfaeb', resave: false, saveUninitialized: false }));
+app.use(passport.initialize());
+app.use(passport.session());
+
 app.use('/', routes);
-app.use('/users', users);
+app.use('/users', ensureAuthenticated ,users);
 app.use('/photos', photos);
 
+app.get('/auth/github',
+ passport.authenticate('github', { scope: ['user:email'] }),
+ function (req, res) {
+});
+
+app.get('/auth/github/callback',
+ passport.authenticate('github', { failureRedirect: '/login' }),
+ function (req, res) {
+  res.redirect('/');
+});
+
+app.get('/login', function (req, res) {
+ res.render('login');
+});
+
+app.get('/logout', function (req, res) {
+ req.logout();
+ res.redirect('/');
+});
+
+// /usersには認証が完了していなければログインできないようにする
+// /loginにリダイレクトする
+function ensureAuthenticated(req, res, next) {
+  if (req.isAuthenticated()) { return next(); }
+  res.redirect('/login');
+}
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
