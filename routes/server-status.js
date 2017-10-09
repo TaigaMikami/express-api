@@ -4,7 +4,7 @@ const router = express.Router();
 const os = require('os');
 
 router.get('/', (req, res, next) => {
-  res.json({ loading: os.loadavg()});
+  res.json({ loadavg: os.loadavg() });
 });
 
 module.exports = router;

@@ -37,6 +37,7 @@ passport.use(new GitHubStrategy({
 var routes = require('./routes/index');
 var users = require('./routes/users');
 var photos = require('./routes/photos');
+var serverStatus = require('./routes/server-status');
 
 var app = express();
 app.use(helmet());
@@ -59,6 +60,7 @@ app.use(passport.session());
 app.use('/', routes);
 app.use('/users', ensureAuthenticated ,users);
 app.use('/photos', photos);
+app.use('/server-status', serverStatus);
 
 app.get('/auth/github',
  passport.authenticate('github', { scope: ['user:email'] }),
